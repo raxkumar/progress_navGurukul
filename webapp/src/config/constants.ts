@@ -16,6 +16,7 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   STUDENT_DASHBOARD: '/student/dashboard',
+  STUDENT_ANALYTICS: '/student/analytics',
   STUDENT_COURSES: '/student/courses',
   STUDENT_COURSE_DETAIL: '/student/courses/:courseId',
   MENTOR_DASHBOARD: '/mentor/dashboard',

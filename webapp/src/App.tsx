@@ -9,6 +9,7 @@ import CreateCourse from './pages/mentor/CreateCourse';
 import CourseDetail from './pages/mentor/CourseDetail';
 import AvailableCourses from './pages/student/AvailableCourses';
 import StudentCourseDetail from './pages/student/StudentCourseDetail';
+import Analytics from './pages/student/Analytics';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { UserRole } from './types/auth';
 import { ROUTES } from './config/constants';
@@ -54,6 +55,14 @@ function App() {
         element={
           <ProtectedRoute requiredRole={UserRole.STUDENT}>
             <StudentCourseDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.STUDENT_ANALYTICS}
+        element={
+          <ProtectedRoute requiredRole={UserRole.STUDENT}>
+            <Analytics />
           </ProtectedRoute>
         }
       />

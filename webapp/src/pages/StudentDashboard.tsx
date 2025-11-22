@@ -16,7 +16,7 @@ import {
   Pagination,
   Stack,
 } from '@mui/material';
-import { School, Assignment, TrendingUp, Add, CheckCircle, HourglassEmpty, Cancel } from '@mui/icons-material';
+import { School, Assignment, TrendingUp, Add, CheckCircle, HourglassEmpty, Cancel, BarChart } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -123,14 +123,24 @@ const StudentDashboard: React.FC = () => {
               Track your learning progress and achievements
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Add />}
-            onClick={() => navigate(ROUTES.STUDENT_COURSES)}
-          >
-            Enroll Courses
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<BarChart />}
+              onClick={() => navigate(ROUTES.STUDENT_ANALYTICS)}
+            >
+              View Analytics
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Add />}
+              onClick={() => navigate(ROUTES.STUDENT_COURSES)}
+            >
+              Enroll Courses
+            </Button>
+          </Box>
         </Box>
 
         {error && (
