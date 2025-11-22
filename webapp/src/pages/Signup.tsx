@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -18,15 +18,24 @@ import {
 import { School } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { UserRole } from '../types/auth';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const Signup: React.FC = () => {
   const { signup, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.STUDENT);
   const [error, setError] = useState('');
+
+  // Set role from URL parameter if present
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam && (roleParam === 'student' || roleParam === 'mentor')) {
+      setRole(roleParam === 'student' ? UserRole.STUDENT : UserRole.MENTOR);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

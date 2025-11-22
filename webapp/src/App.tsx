@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import StudentDashboard from './pages/StudentDashboard';
@@ -17,8 +18,8 @@ import { ROUTES } from './config/constants';
 function App() {
   const { isAuthenticated, user } = useAuth();
 
-  // Redirect authenticated users from home to their dashboard
-  const HomeRedirect = () => {
+  // Show landing page for unauthenticated users, redirect authenticated users to their dashboard
+  const HomeRoute = () => {
     if (isAuthenticated && user) {
       const redirectPath =
         user.role === UserRole.STUDENT
@@ -26,12 +27,12 @@ function App() {
           : ROUTES.MENTOR_DASHBOARD;
       return <Navigate to={redirectPath} replace />;
     }
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    return <Landing />;
   };
 
   return (
     <Routes>
-      <Route path={ROUTES.HOME} element={<HomeRedirect />} />
+      <Route path={ROUTES.HOME} element={<HomeRoute />} />
       <Route path={ROUTES.LOGIN} element={<Login />} />
       <Route path={ROUTES.SIGNUP} element={<Signup />} />
       <Route
