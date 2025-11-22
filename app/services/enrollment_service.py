@@ -6,6 +6,7 @@ from models.pagination import PaginatedResponse
 from repository.enrollment_repository import enrollment_repository
 from repository.course_repository import course_repository
 from core.log_config import logger
+import asyncio
 
 
 class EnrollmentService:
@@ -52,7 +53,8 @@ class EnrollmentService:
     
     async def get_student_enrollments(self, student_id: str) -> List[Enrollment]:
         """Get all enrollments for a student"""
-        enrollments_in_db = await enrollment_repository.get_enrollments_by_student(student_id)
+        # Get all enrollments (without pagination limit, get up to 1000)
+        enrollments_in_db, _ = await enrollment_repository.get_enrollments_by_student(student_id, skip=0, limit=1000)
         
         return [Enrollment(
             _id=e.id,
@@ -133,6 +135,9 @@ class EnrollmentService:
                 detail="Failed to approve enrollment"
             )
         
+        # Trigger stats recalculation in background
+        asyncio.create_task(self._recalculate_stats_async(updated_enrollment.student_id))
+        
         return Enrollment(
             _id=updated_enrollment.id,
             student_id=updated_enrollment.student_id,
@@ -142,6 +147,14 @@ class EnrollmentService:
             approved_at=updated_enrollment.approved_at,
             approved_by=updated_enrollment.approved_by
         )
+    
+    async def _recalculate_stats_async(self, student_id: str):
+        """Recalculate student stats asynchronously"""
+        try:
+            from services.student_stats_service import student_stats_service
+            await student_stats_service.recalculate_student_stats(student_id)
+        except Exception as e:
+            logger.error(f"Error recalculating stats for student {student_id}: {e}")
     
     async def reject_enrollment(self, enrollment_id: str, user_id: str) -> Enrollment:
         """Reject an enrollment request (only course owner)"""

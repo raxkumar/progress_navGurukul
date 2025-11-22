@@ -18,6 +18,22 @@ export default defineConfig({
         target: 'http://localhost:5001',
         changeOrigin: true,
       },
+      '/student-stats': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+      '/courses': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+      '/enrollments': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+      '/progress': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
     },
   },
 })

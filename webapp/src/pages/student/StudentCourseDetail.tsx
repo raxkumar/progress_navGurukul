@@ -176,23 +176,102 @@ const StudentCourseDetail: React.FC = () => {
                   {course.description}
                 </Typography>
 
+                {/* Progress Stats Cards */}
+                <Grid container spacing={2} sx={{ mt: 2, mb: 3 }}>
+                  <Grid item xs={12} sm={4}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        bgcolor: 'primary.light',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="h3" fontWeight={700} color="primary.dark">
+                        {courseProgress.total}
+                      </Typography>
+                      <Typography variant="body2" color="primary.dark">
+                        Total Lessons
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        bgcolor: 'success.light',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="h3" fontWeight={700} color="success.dark">
+                        {courseProgress.completed}
+                      </Typography>
+                      <Typography variant="body2" color="success.dark">
+                        Completed
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        bgcolor: 'warning.light',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="h3" fontWeight={700} color="warning.dark">
+                        {courseProgress.total - courseProgress.completed}
+                      </Typography>
+                      <Typography variant="body2" color="warning.dark">
+                        Remaining
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                {/* Progress Bar */}
                 <Box sx={{ mt: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Course Progress
+                    <Typography variant="body2" fontWeight={600} color="text.primary">
+                      Your Progress
                     </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {courseProgress.completed}/{courseProgress.total} lessons completed
+                    <Typography variant="body2" fontWeight={600} color="primary.main">
+                      {courseProgress.percentage}% Complete
                     </Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
                     value={courseProgress.percentage}
-                    sx={{ height: 10, borderRadius: 5 }}
+                    sx={{ 
+                      height: 12, 
+                      borderRadius: 6,
+                      bgcolor: 'grey.200',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 6,
+                        bgcolor: courseProgress.percentage === 100 ? 'success.main' : 'primary.main'
+                      }
+                    }}
                   />
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                    {courseProgress.percentage}% Complete
-                  </Typography>
+                  {courseProgress.percentage === 100 && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 1 }}>
+                      <CheckCircle color="success" fontSize="small" />
+                      <Typography variant="caption" color="success.main" fontWeight={600}>
+                        🎉 Congratulations! You've completed all lessons in this course!
+                      </Typography>
+                    </Box>
+                  )}
+                  {courseProgress.percentage > 0 && courseProgress.percentage < 100 && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      Keep going! You're {courseProgress.percentage}% of the way there.
+                    </Typography>
+                  )}
+                  {courseProgress.percentage === 0 && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                      Start your learning journey! Complete your first lesson below.
+                    </Typography>
+                  )}
                 </Box>
               </CardContent>
             </Card>
@@ -200,9 +279,16 @@ const StudentCourseDetail: React.FC = () => {
             {/* Lessons List */}
             <Card>
               <CardContent>
-                <Typography variant="h5" fontWeight={600} gutterBottom>
-                  Course Lessons
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h5" fontWeight={600}>
+                    Course Lessons
+                  </Typography>
+                  <Chip
+                    label={`${courseProgress.completed} of ${courseProgress.total} completed`}
+                    color={courseProgress.percentage === 100 ? 'success' : 'primary'}
+                    variant="outlined"
+                  />
+                </Box>
 
                 {lessons.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
@@ -216,33 +302,58 @@ const StudentCourseDetail: React.FC = () => {
                         <ListItem
                           key={lesson._id}
                           disablePadding
+                          sx={{
+                            mb: 1,
+                            border: 1,
+                            borderColor: completed ? 'success.light' : 'divider',
+                            borderRadius: 2,
+                            bgcolor: completed ? 'action.hover' : 'background.paper',
+                            transition: 'all 0.3s',
+                            '&:hover': {
+                              borderColor: completed ? 'success.main' : 'primary.main',
+                              boxShadow: 1,
+                            },
+                          }}
                           secondaryAction={
-                            completed && (
+                            completed ? (
                               <Chip
                                 icon={<CheckCircle />}
                                 label="Completed"
                                 color="success"
                                 size="small"
+                                sx={{ mr: 1 }}
+                              />
+                            ) : (
+                              <Chip
+                                label="Start"
+                                color="primary"
+                                variant="outlined"
+                                size="small"
+                                sx={{ mr: 1 }}
                               />
                             )
                           }
                         >
-                          <ListItemButton onClick={() => handleLessonClick(lesson)}>
+                          <ListItemButton 
+                            onClick={() => handleLessonClick(lesson)}
+                            sx={{ py: 2 }}
+                          >
                             <ListItemIcon>
                               <Box
                                 sx={{
-                                  width: 40,
-                                  height: 40,
+                                  width: 48,
+                                  height: 48,
                                   borderRadius: '50%',
-                                  bgcolor: completed ? 'success.light' : 'grey.200',
+                                  bgcolor: completed ? 'success.main' : 'primary.light',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   mr: 1,
+                                  boxShadow: completed ? 2 : 0,
                                 }}
                               >
                                 {completed ? (
-                                  <CheckCircle color="success" />
+                                  <CheckCircle sx={{ color: 'white' }} />
                                 ) : (
                                   getLessonIcon(lesson.type)
                                 )}
@@ -250,14 +361,36 @@ const StudentCourseDetail: React.FC = () => {
                             </ListItemIcon>
                             <ListItemText
                               primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography fontWeight={completed ? 400 : 600}>
-                                    {index + 1}. {lesson.title}
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                  <Typography 
+                                    fontWeight={600} 
+                                    sx={{ 
+                                      textDecoration: completed ? 'line-through' : 'none',
+                                      color: completed ? 'text.secondary' : 'text.primary'
+                                    }}
+                                  >
+                                    Lesson {index + 1}: {lesson.title}
                                   </Typography>
-                                  <Chip label={lesson.type} size="small" variant="outlined" />
+                                  <Chip 
+                                    label={lesson.type} 
+                                    size="small" 
+                                    variant="outlined"
+                                    sx={{ height: 20 }}
+                                  />
                                 </Box>
                               }
-                              secondary={lesson.description}
+                              secondary={
+                                <Box>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {lesson.description}
+                                  </Typography>
+                                  {lesson.duration && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                      ⏱️ Duration: {lesson.duration} minutes
+                                    </Typography>
+                                  )}
+                                </Box>
+                              }
                             />
                           </ListItemButton>
                         </ListItem>

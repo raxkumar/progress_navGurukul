@@ -7,6 +7,7 @@ from repository.enrollment_repository import enrollment_repository
 from repository.course_repository import course_repository
 from models.enrollment import EnrollmentStatus
 from core.log_config import logger
+import asyncio
 
 
 class ProgressService:
@@ -44,6 +45,9 @@ class ProgressService:
         
         logger.info(f"Student {student_id} completed lesson {lesson_id}")
         
+        # Trigger stats recalculation in background
+        asyncio.create_task(self._recalculate_stats_async(student_id))
+        
         return Progress(
             _id=progress_in_db.id,
             student_id=progress_in_db.student_id,
@@ -52,6 +56,14 @@ class ProgressService:
             completed=progress_in_db.completed,
             completed_at=progress_in_db.completed_at
         )
+    
+    async def _recalculate_stats_async(self, student_id: str):
+        """Recalculate student stats asynchronously"""
+        try:
+            from services.student_stats_service import student_stats_service
+            await student_stats_service.recalculate_student_stats(student_id)
+        except Exception as e:
+            logger.error(f"Error recalculating stats for student {student_id}: {e}")
     
     async def get_student_course_progress(self, course_id: str, student_id: str) -> CourseProgress:
         """Get student's progress for a specific course"""

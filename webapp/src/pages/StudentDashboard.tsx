@@ -22,6 +22,8 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import enrollmentService from '../services/enrollmentService';
 import progressService from '../services/progressService';
+import studentStatsService from '../services/studentStatsService';
+import type { StudentStats } from '../services/studentStatsService';
 import type { CourseWithProgress, EnrollmentStatus } from '../types/course';
 import { ROUTES } from '../config/constants';
 
@@ -35,24 +37,27 @@ const StudentDashboard: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCourses, setTotalCourses] = useState(0);
   const limit = 6; // Show 6 courses per page
-  const [stats, setStats] = useState({
-    totalCourses: 0,
-    completedLessons: 0,
-    overallProgress: 0,
-  });
+  const [studentStats, setStudentStats] = useState<StudentStats | null>(null);
 
   useEffect(() => {
-    fetchEnrolledCourses();
+    fetchData();
   }, [page]);
 
-  const fetchEnrolledCourses = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await enrollmentService.getMyEnrolledCourses(page, limit);
-      const courses = response.items;
-      setTotalPages(response.total_pages);
-      setTotalCourses(response.total);
+      
+      // Fetch enrolled courses and stats in parallel
+      const [coursesResponse, stats] = await Promise.all([
+        enrollmentService.getMyEnrolledCourses(page, limit),
+        studentStatsService.getMyStats(),
+      ]);
+      
+      const courses = coursesResponse.items;
+      setTotalPages(coursesResponse.total_pages);
+      setTotalCourses(coursesResponse.total);
+      setStudentStats(stats);
       
       // Fetch progress for each course
       const coursesWithProgress = await Promise.all(
@@ -67,28 +72,9 @@ const StudentDashboard: React.FC = () => {
       );
 
       setEnrolledCourses(coursesWithProgress);
-
-      // Calculate stats
-      const totalCompleted = coursesWithProgress.reduce(
-        (acc, course) => acc + (course.progress?.completed_lessons || 0),
-        0
-      );
-      const totalLessons = coursesWithProgress.reduce(
-        (acc, course) => acc + (course.progress?.total_lessons || 0),
-        0
-      );
-      const avgProgress = totalLessons > 0 
-        ? Math.round((totalCompleted / totalLessons) * 100)
-        : 0;
-
-      setStats({
-        totalCourses: totalCourses,
-        completedLessons: totalCompleted,
-        overallProgress: avgProgress,
-      });
     } catch (err: any) {
-      console.error('Error fetching enrolled courses:', err);
-      setError(err.response?.data?.detail || 'Failed to fetch enrolled courses');
+      console.error('Error fetching data:', err);
+      setError(err.response?.data?.detail || 'Failed to fetch data');
     } finally {
       setLoading(false);
     }
@@ -165,7 +151,7 @@ const StudentDashboard: React.FC = () => {
                       Courses
                     </Typography>
                     <Typography variant="h4" fontWeight={700}>
-                      {loading ? '...' : stats.totalCourses}
+                      {loading ? '...' : (studentStats?.total_enrolled_courses || 0)}
                     </Typography>
                   </Box>
                 </Box>
@@ -186,7 +172,7 @@ const StudentDashboard: React.FC = () => {
                       Lessons
                     </Typography>
                     <Typography variant="h4" fontWeight={700}>
-                      {loading ? '...' : stats.completedLessons}
+                      {loading ? '...' : (studentStats?.total_completed_lessons || 0)}
                     </Typography>
                   </Box>
                 </Box>
@@ -207,7 +193,7 @@ const StudentDashboard: React.FC = () => {
                       Progress
                     </Typography>
                     <Typography variant="h4" fontWeight={700}>
-                      {loading ? '...' : `${stats.overallProgress}%`}
+                      {loading ? '...' : `${Math.round(studentStats?.overall_progress_percentage || 0)}%`}
                     </Typography>
                   </Box>
                 </Box>

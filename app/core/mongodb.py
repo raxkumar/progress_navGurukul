@@ -74,6 +74,13 @@ async def initialize_collections():
             await progress_collection.create_index([('student_id', 1), ('lesson_id', 1)], unique=True)
             logger.info("Created unique compound index on 'student_id' and 'lesson_id' in progress collection")
         
+        # Student Stats collection - student_id unique index
+        student_stats_collection = database['student_stats']
+        student_stats_indexes = await student_stats_collection.index_information()
+        if 'student_id_1' not in student_stats_indexes:
+            await student_stats_collection.create_index('student_id', unique=True)
+            logger.info("Created unique index on 'student_id' field in student_stats collection")
+        
         logger.info("Database initialization completed successfully!")
         
     except Exception as e:
