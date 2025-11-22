@@ -43,6 +43,7 @@ const MentorDashboard: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCourses, setTotalCourses] = useState(0);
+  const [enrolledStudentsCount, setEnrolledStudentsCount] = useState(0);
   const limit = 6; // Show 6 courses per page
 
   useEffect(() => {
@@ -52,14 +53,16 @@ const MentorDashboard: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [coursesResponse, enrollmentsData] = await Promise.all([
+      const [coursesResponse, enrollmentsData, studentsCount] = await Promise.all([
         courseService.getMyCourses(page, limit),
         enrollmentService.getPendingEnrollments(),
+        enrollmentService.getEnrolledStudentsCount(),
       ]);
       setCourses(coursesResponse.items);
       setTotalPages(coursesResponse.total_pages);
       setTotalCourses(coursesResponse.total);
       setEnrollmentRequests(enrollmentsData);
+      setEnrolledStudentsCount(studentsCount);
     } catch (error) {
       console.error('Failed to load data:', error);
       setError('Failed to load data');
@@ -179,7 +182,7 @@ const MentorDashboard: React.FC = () => {
                       Students
                     </Typography>
                     <Typography variant="h4" fontWeight={700}>
-                      0
+                      {loading ? '...' : enrolledStudentsCount}
                     </Typography>
                   </Box>
                 </Box>

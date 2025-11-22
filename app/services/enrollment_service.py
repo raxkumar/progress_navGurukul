@@ -284,6 +284,25 @@ class EnrollmentService:
             all_pending_enrollments.extend(pending_enrollments)
         
         return all_pending_enrollments
+    
+    async def get_mentor_enrolled_students_count(self, mentor_id: str) -> int:
+        """Get count of unique students enrolled in mentor's courses"""
+        # Get all courses by mentor
+        courses, _ = await course_repository.get_courses_by_mentor(mentor_id, skip=0, limit=1000)
+        
+        # Track unique student IDs
+        unique_students = set()
+        
+        for course in courses:
+            # Get all enrollments for each course
+            enrollments_in_db = await enrollment_repository.get_enrollments_by_course(course.id)
+            
+            # Add approved students to the set
+            for enrollment in enrollments_in_db:
+                if enrollment.status == EnrollmentStatus.APPROVED:
+                    unique_students.add(enrollment.student_id)
+        
+        return len(unique_students)
 
 
 # Create singleton instance

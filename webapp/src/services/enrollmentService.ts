@@ -41,6 +41,11 @@ class EnrollmentService {
     return response.data;
   }
 
+  async getEnrolledStudentsCount(): Promise<number> {
+    const response = await apiClient.get<number>('/enrollments/students-count');
+    return response.data;
+  }
+
   async approveEnrollment(enrollmentId: string): Promise<Enrollment> {
     const response = await apiClient.put<Enrollment>(
       `/enrollments/${enrollmentId}/approve`

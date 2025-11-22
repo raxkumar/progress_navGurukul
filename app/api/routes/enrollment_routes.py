@@ -73,6 +73,18 @@ async def get_pending_enrollments(current_user: TokenData = Depends(get_current_
 
 
 @router.get(
+    "/students-count",
+    response_model=int,
+    summary="Get enrolled students count"
+)
+async def get_enrolled_students_count(current_user: TokenData = Depends(get_current_mentor)):
+    """
+    Get count of unique students enrolled in mentor's courses (Mentor only).
+    """
+    return await enrollment_service.get_mentor_enrolled_students_count(current_user.user_id)
+
+
+@router.get(
     "/courses/{course_id}",
     response_model=List[Enrollment],
     summary="Get course enrollments"
