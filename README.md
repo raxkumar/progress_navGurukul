@@ -665,6 +665,12 @@ If not: 403 Forbidden
 
 ## 📡 API Endpoints
 
+> **📚 Interactive API Documentation**: FastAPI provides automatic interactive API documentation. Once the backend server is running, visit:
+> - **Swagger UI**: [http://localhost:5001/docs](http://localhost:5001/docs)
+> - **ReDoc**: [http://localhost:5001/redoc](http://localhost:5001/redoc)
+> 
+> These interfaces allow you to explore and test all API endpoints directly from your browser!
+
 ### Authentication Endpoints
 ```
 POST   /auth/signup              # Register new user
@@ -823,16 +829,13 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your MongoDB connection details
-
 # Seed database (optional)
 python app/seed_data.py
 
 # Run backend server
 python app/main.py
 # Server runs on http://localhost:5001
+# API Documentation available at http://localhost:5001/docs
 ```
 
 ### Frontend Setup
@@ -865,6 +868,13 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 - **Student**: student@progress.com / 123456
 - 50 courses with 3-10 random lessons each
 - Student enrolled in 20 approved + 5 pending courses
+
+### Accessing the Application
+Once both servers are running:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5001
+- **API Documentation (Swagger)**: http://localhost:5001/docs
+- **API Documentation (ReDoc)**: http://localhost:5001/redoc
 
 ---
 
@@ -932,74 +942,7 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 
 ---
 
-## 📊 Project Statistics
 
-- **Backend Files**: 30+ Python files
-- **Frontend Files**: 40+ TypeScript/React files
-- **API Endpoints**: 35+ REST endpoints
-- **Database Collections**: 6 collections
-- **Total Lines of Code**: ~8,000+ lines
-- **Development Time**: Complete project lifecycle
-- **Features Implemented**: 20+ major features
 
----
 
-## 🏆 Key Achievements
-
-1. **Full-Stack Implementation**: Complete MERN-like stack with FastAPI
-2. **Role-Based Architecture**: Secure RBAC implementation
-3. **Performance Optimization**: Caching and pagination
-4. **Type Safety**: End-to-end TypeScript + Pydantic
-5. **Modern UI/UX**: Material-UI best practices
-6. **Production-Ready**: Error handling, validation, security
-7. **Scalable Architecture**: Layered design pattern
-8. **Visual Analytics**: Interactive charts with Recharts
-
----
-
-## 📝 Technical Highlights for Interviews
-
-### Backend Expertise
-- ✅ RESTful API design with FastAPI
-- ✅ Async/await pattern with Python asyncio
-- ✅ MongoDB with Motor async driver
-- ✅ JWT authentication and authorization
-- ✅ Repository pattern for data access
-- ✅ Service layer for business logic
-- ✅ Pydantic for data validation
-- ✅ Background task processing
-- ✅ Database indexing and optimization
-
-### Frontend Expertise
-- ✅ React 19 with TypeScript
-- ✅ Context API for state management
-- ✅ Custom hooks implementation
-- ✅ Protected routing with React Router
-- ✅ Axios interceptors for auth
-- ✅ Material-UI component library
-- ✅ Responsive design principles
-- ✅ Data visualization with Recharts
-- ✅ Form validation and error handling
-
-### Software Engineering Practices
-- ✅ Clean code architecture
-- ✅ Separation of concerns
-- ✅ DRY principle
-- ✅ Type safety throughout
-- ✅ Error handling and recovery
-- ✅ Consistent naming conventions
-- ✅ Code reusability
-- ✅ Documentation
-
----
-
-## 📞 Contact & Support
-
-For questions or issues, please refer to the project repository or documentation.
-
----
-
-**Last Updated**: November 2025  
-**Version**: 1.0.0  
-**Status**: Production Ready
 
