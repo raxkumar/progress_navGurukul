@@ -855,7 +855,7 @@ npm run dev
 ```env
 # Backend (.env)
 MONGO_HOST=localhost
-MONGO_PORT=27017
+MONGO_PORT=5432
 MONGO_DB=progress_db
 JWT_SECRET_KEY=your-secret-key-change-in-production
 JWT_ALGORITHM=HS256
