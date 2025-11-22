@@ -4,6 +4,7 @@ import type {
   EnrollmentCreate,
   CourseWithProgress,
 } from '../types/course';
+import type { PaginatedResponse } from '../types/pagination';
 
 class EnrollmentService {
   async createEnrollment(enrollmentData: EnrollmentCreate): Promise<Enrollment> {
@@ -23,8 +24,10 @@ class EnrollmentService {
     return response.data;
   }
 
-  async getMyEnrolledCourses(): Promise<CourseWithProgress[]> {
-    const response = await apiClient.get<CourseWithProgress[]>('/enrollments/my-courses');
+  async getMyEnrolledCourses(page: number = 1, limit: number = 10): Promise<PaginatedResponse<CourseWithProgress>> {
+    const response = await apiClient.get<PaginatedResponse<CourseWithProgress>>('/enrollments/my-courses', {
+      params: { page, limit }
+    });
     return response.data;
   }
 

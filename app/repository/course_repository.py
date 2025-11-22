@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from datetime import datetime
 from bson import ObjectId
 from models.course import CourseCreate, CourseUpdate, CourseInDB
@@ -61,10 +61,20 @@ class CourseRepository:
         
         return None
     
-    async def get_courses_by_mentor(self, mentor_id: str) -> List[CourseInDB]:
-        """Get all courses by a mentor"""
+    async def get_courses_by_mentor(self, mentor_id: str, skip: int = 0, limit: int = 10) -> Tuple[List[CourseInDB], int]:
+        """Get courses by a mentor with pagination
+        
+        Returns:
+            Tuple of (courses list, total count)
+        """
+        query = {"mentor_id": mentor_id}
+        
+        # Get total count
+        total = await self.collection.count_documents(query)
+        
+        # Get paginated courses
         courses = []
-        cursor = self.collection.find({"mentor_id": mentor_id}).sort("created_at", -1)
+        cursor = self.collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
         
         async for course in cursor:
             courses.append(CourseInDB(
@@ -76,12 +86,22 @@ class CourseRepository:
                 updated_at=course["updated_at"]
             ))
         
-        return courses
+        return courses, total
     
-    async def get_all_courses(self) -> List[CourseInDB]:
-        """Get all courses"""
+    async def get_all_courses(self, skip: int = 0, limit: int = 10) -> Tuple[List[CourseInDB], int]:
+        """Get all courses with pagination
+        
+        Returns:
+            Tuple of (courses list, total count)
+        """
+        query = {}
+        
+        # Get total count
+        total = await self.collection.count_documents(query)
+        
+        # Get paginated courses
         courses = []
-        cursor = self.collection.find({}).sort("created_at", -1)
+        cursor = self.collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
         
         async for course in cursor:
             courses.append(CourseInDB(
@@ -93,7 +113,7 @@ class CourseRepository:
                 updated_at=course["updated_at"]
             ))
         
-        return courses
+        return courses, total
     
     async def update_course(self, course_id: str, course_update: CourseUpdate) -> Optional[CourseInDB]:
         """Update course"""

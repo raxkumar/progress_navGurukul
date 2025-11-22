@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from typing import List
 from models.course import CourseCreate, CourseUpdate, Course
+from models.pagination import PaginatedResponse
 from models.user import TokenData
 from services.course_service import course_service
 from core.dependencies import get_current_mentor
@@ -30,26 +31,39 @@ async def create_course(
 
 @router.get(
     "/",
-    response_model=List[Course],
+    response_model=PaginatedResponse[Course],
     summary="Get all courses"
 )
-async def get_all_courses():
+async def get_all_courses(
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page")
+):
     """
-    Get all available courses (public).
+    Get all available courses with pagination (public).
+    
+    - **page**: Page number (starts at 1)
+    - **limit**: Number of items per page (1-100)
     """
-    return await course_service.get_all_courses()
+    return await course_service.get_all_courses(page=page, limit=limit)
 
 
 @router.get(
     "/my-courses",
-    response_model=List[Course],
+    response_model=PaginatedResponse[Course],
     summary="Get mentor's courses"
 )
-async def get_my_courses(current_user: TokenData = Depends(get_current_mentor)):
+async def get_my_courses(
+    current_user: TokenData = Depends(get_current_mentor),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page")
+):
     """
-    Get courses created by the current mentor (Mentor only).
+    Get courses created by the current mentor with pagination (Mentor only).
+    
+    - **page**: Page number (starts at 1)
+    - **limit**: Number of items per page (1-100)
     """
-    return await course_service.get_mentor_courses(current_user.user_id)
+    return await course_service.get_mentor_courses(current_user.user_id, page=page, limit=limit)
 
 
 @router.get(

@@ -4,6 +4,7 @@ import type {
   CourseCreate,
   CourseUpdate,
 } from '../types/course';
+import type { PaginatedResponse } from '../types/pagination';
 
 class CourseService {
   async createCourse(courseData: CourseCreate): Promise<Course> {
@@ -11,13 +12,17 @@ class CourseService {
     return response.data;
   }
 
-  async getAllCourses(): Promise<Course[]> {
-    const response = await apiClient.get<Course[]>('/courses');
+  async getAllCourses(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Course>> {
+    const response = await apiClient.get<PaginatedResponse<Course>>('/courses', {
+      params: { page, limit }
+    });
     return response.data;
   }
 
-  async getMyCourses(): Promise<Course[]> {
-    const response = await apiClient.get<Course[]>('/courses/my-courses');
+  async getMyCourses(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Course>> {
+    const response = await apiClient.get<PaginatedResponse<Course>>('/courses/my-courses', {
+      params: { page, limit }
+    });
     return response.data;
   }
 

@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Tuple
 from fastapi import HTTPException, status
 from models.course import CourseCreate, CourseUpdate, Course
 from models.user import UserRole
+from models.pagination import PaginatedResponse
 from repository.course_repository import course_repository
 from repository.lesson_repository import lesson_repository
 from core.log_config import logger
@@ -42,11 +43,12 @@ class CourseService:
             updated_at=course_in_db.updated_at
         )
     
-    async def get_all_courses(self) -> List[Course]:
-        """Get all courses"""
-        courses_in_db = await course_repository.get_all_courses()
+    async def get_all_courses(self, page: int = 1, limit: int = 10) -> PaginatedResponse[Course]:
+        """Get all courses with pagination"""
+        skip = (page - 1) * limit
+        courses_in_db, total = await course_repository.get_all_courses(skip=skip, limit=limit)
         
-        return [Course(
+        courses = [Course(
             _id=c.id,
             title=c.title,
             description=c.description,
@@ -54,12 +56,20 @@ class CourseService:
             created_at=c.created_at,
             updated_at=c.updated_at
         ) for c in courses_in_db]
+        
+        return PaginatedResponse.create(
+            items=courses,
+            total=total,
+            page=page,
+            limit=limit
+        )
     
-    async def get_mentor_courses(self, mentor_id: str) -> List[Course]:
-        """Get courses created by a mentor"""
-        courses_in_db = await course_repository.get_courses_by_mentor(mentor_id)
+    async def get_mentor_courses(self, mentor_id: str, page: int = 1, limit: int = 10) -> PaginatedResponse[Course]:
+        """Get courses created by a mentor with pagination"""
+        skip = (page - 1) * limit
+        courses_in_db, total = await course_repository.get_courses_by_mentor(mentor_id, skip=skip, limit=limit)
         
-        return [Course(
+        courses = [Course(
             _id=c.id,
             title=c.title,
             description=c.description,
@@ -67,6 +77,13 @@ class CourseService:
             created_at=c.created_at,
             updated_at=c.updated_at
         ) for c in courses_in_db]
+        
+        return PaginatedResponse.create(
+            items=courses,
+            total=total,
+            page=page,
+            limit=limit
+        )
     
     async def update_course(
         self, 

@@ -19,6 +19,8 @@ import {
   ListItem,
   ListItemText,
   Snackbar,
+  Pagination,
+  Stack,
 } from '@mui/material';
 import { Add, School, People, CheckCircle, HourglassEmpty, Check, Close } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
@@ -38,19 +40,25 @@ const MentorDashboard: React.FC = () => {
   const [processing, setProcessing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const limit = 6; // Show 6 courses per page
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [coursesData, enrollmentsData] = await Promise.all([
-        courseService.getMyCourses(),
+      const [coursesResponse, enrollmentsData] = await Promise.all([
+        courseService.getMyCourses(page, limit),
         enrollmentService.getPendingEnrollments(),
       ]);
-      setCourses(coursesData);
+      setCourses(coursesResponse.items);
+      setTotalPages(coursesResponse.total_pages);
+      setTotalCourses(coursesResponse.total);
       setEnrollmentRequests(enrollmentsData);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -58,6 +66,11 @@ const MentorDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleApproveEnrollment = async (enrollmentId: string) => {
@@ -145,7 +158,7 @@ const MentorDashboard: React.FC = () => {
                       Courses
                     </Typography>
                     <Typography variant="h4" fontWeight={700}>
-                      {loading ? '...' : courses.length}
+                      {loading ? '...' : totalCourses}
                     </Typography>
                   </Box>
                 </Box>
@@ -264,6 +277,26 @@ const MentorDashboard: React.FC = () => {
                   </Grid>
                 ))}
               </Grid>
+            )}
+            
+            {/* Pagination */}
+            {!loading && courses.length > 0 && totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Stack spacing={2}>
+                  <Pagination 
+                    count={totalPages} 
+                    page={page} 
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                    showFirstButton
+                    showLastButton
+                  />
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    Showing page {page} of {totalPages} ({totalCourses} total courses)
+                  </Typography>
+                </Stack>
+              </Box>
             )}
           </Grid>
         </Grid>

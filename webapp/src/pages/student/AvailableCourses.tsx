@@ -12,6 +12,8 @@ import {
   Chip,
   CardActions,
   Snackbar,
+  Pagination,
+  Stack,
 } from '@mui/material';
 import { CheckCircle, HourglassEmpty, School } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -29,19 +31,25 @@ const AvailableCourses: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [enrolling, setEnrolling] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const limit = 9; // Show 9 courses per page (3x3 grid)
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [page]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Fetch all courses
-      const allCourses = await courseService.getAllCourses();
-      setCourses(allCourses);
+      // Fetch all courses with pagination
+      const coursesResponse = await courseService.getAllCourses(page, limit);
+      setCourses(coursesResponse.items);
+      setTotalPages(coursesResponse.total_pages);
+      setTotalCourses(coursesResponse.total);
 
       // Fetch my enrollments
       const myEnrollments = await enrollmentService.getMyEnrollments();
@@ -77,6 +85,11 @@ const AvailableCourses: React.FC = () => {
 
   const getEnrollmentStatus = (courseId: string) => {
     return enrollments.get(courseId);
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -190,6 +203,26 @@ const AvailableCourses: React.FC = () => {
               );
             })}
           </Grid>
+        )}
+
+        {/* Pagination */}
+        {!loading && courses.length > 0 && totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Stack spacing={2}>
+              <Pagination 
+                count={totalPages} 
+                page={page} 
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+                showFirstButton
+                showLastButton
+              />
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                Showing page {page} of {totalPages} ({totalCourses} total courses)
+              </Typography>
+            </Stack>
+          </Box>
         )}
 
         <Snackbar

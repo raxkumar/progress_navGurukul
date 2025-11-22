@@ -13,6 +13,8 @@ import {
   Chip,
   LinearProgress,
   CardActions,
+  Pagination,
+  Stack,
 } from '@mui/material';
 import { School, Assignment, TrendingUp, Add, CheckCircle, HourglassEmpty, Cancel } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
@@ -29,6 +31,10 @@ const StudentDashboard: React.FC = () => {
   const [enrolledCourses, setEnrolledCourses] = useState<CourseWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const limit = 6; // Show 6 courses per page
   const [stats, setStats] = useState({
     totalCourses: 0,
     completedLessons: 0,
@@ -37,13 +43,16 @@ const StudentDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchEnrolledCourses();
-  }, []);
+  }, [page]);
 
   const fetchEnrolledCourses = async () => {
     try {
       setLoading(true);
       setError(null);
-      const courses = await enrollmentService.getMyEnrolledCourses();
+      const response = await enrollmentService.getMyEnrolledCourses(page, limit);
+      const courses = response.items;
+      setTotalPages(response.total_pages);
+      setTotalCourses(response.total);
       
       // Fetch progress for each course
       const coursesWithProgress = await Promise.all(
@@ -73,7 +82,7 @@ const StudentDashboard: React.FC = () => {
         : 0;
 
       setStats({
-        totalCourses: courses.length,
+        totalCourses: totalCourses,
         completedLessons: totalCompleted,
         overallProgress: avgProgress,
       });
@@ -83,6 +92,11 @@ const StudentDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getEnrollmentStatusIcon = (status: EnrollmentStatus) => {
@@ -299,6 +313,26 @@ const StudentDashboard: React.FC = () => {
                   </Grid>
                 ))}
               </Grid>
+            )}
+            
+            {/* Pagination */}
+            {!loading && enrolledCourses.length > 0 && totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Stack spacing={2}>
+                  <Pagination 
+                    count={totalPages} 
+                    page={page} 
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                    showFirstButton
+                    showLastButton
+                  />
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    Showing page {page} of {totalPages} ({totalCourses} total courses)
+                  </Typography>
+                </Stack>
+              </Box>
             )}
           </Grid>
         </Grid>

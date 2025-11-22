@@ -2,6 +2,7 @@ from typing import List
 from fastapi import HTTPException, status
 from models.enrollment import EnrollmentCreate, EnrollmentStatus, Enrollment
 from models.course import CourseWithProgress, Course
+from models.pagination import PaginatedResponse
 from repository.enrollment_repository import enrollment_repository
 from repository.course_repository import course_repository
 from core.log_config import logger
@@ -197,10 +198,11 @@ class EnrollmentService:
         enrollment = await enrollment_repository.check_enrollment_exists(student_id, course_id)
         return enrollment is not None and enrollment.status == EnrollmentStatus.APPROVED
     
-    async def get_student_enrolled_courses(self, student_id: str) -> List[CourseWithProgress]:
-        """Get all enrolled courses with progress for a student"""
-        # Get all enrollments for the student
-        enrollments_in_db = await enrollment_repository.get_enrollments_by_student(student_id)
+    async def get_student_enrolled_courses(self, student_id: str, page: int = 1, limit: int = 10) -> PaginatedResponse[CourseWithProgress]:
+        """Get all enrolled courses with progress for a student (paginated)"""
+        # Get enrollments for the student with pagination
+        skip = (page - 1) * limit
+        enrollments_in_db, total = await enrollment_repository.get_enrollments_by_student(student_id, skip=skip, limit=limit)
         
         courses_with_progress = []
         
@@ -246,12 +248,17 @@ class EnrollmentService:
             
             courses_with_progress.append(course_with_progress)
         
-        return courses_with_progress
+        return PaginatedResponse.create(
+            items=courses_with_progress,
+            total=total,
+            page=page,
+            limit=limit
+        )
     
     async def get_mentor_pending_enrollments(self, mentor_id: str) -> List[Enrollment]:
         """Get all pending enrollment requests for courses owned by the mentor"""
-        # Get all courses by mentor
-        courses = await course_repository.get_courses_by_mentor(mentor_id)
+        # Get all courses by mentor (without pagination, get all courses)
+        courses, _ = await course_repository.get_courses_by_mentor(mentor_id, skip=0, limit=1000)
         
         all_pending_enrollments = []
         

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from typing import List
 from models.enrollment import EnrollmentCreate, Enrollment
 from models.course import CourseWithProgress
+from models.pagination import PaginatedResponse
 from models.user import TokenData
 from services.enrollment_service import enrollment_service
 from core.dependencies import get_current_student, get_current_mentor
@@ -42,14 +43,21 @@ async def get_my_enrollments(current_user: TokenData = Depends(get_current_stude
 
 @router.get(
     "/my-courses",
-    response_model=List[CourseWithProgress],
+    response_model=PaginatedResponse[CourseWithProgress],
     summary="Get student's enrolled courses with progress"
 )
-async def get_my_enrolled_courses(current_user: TokenData = Depends(get_current_student)):
+async def get_my_enrolled_courses(
+    current_user: TokenData = Depends(get_current_student),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page")
+):
     """
-    Get all enrolled courses with progress for the current student (Student only).
+    Get all enrolled courses with progress for the current student with pagination (Student only).
+    
+    - **page**: Page number (starts at 1)
+    - **limit**: Number of items per page (1-100)
     """
-    return await enrollment_service.get_student_enrolled_courses(current_user.user_id)
+    return await enrollment_service.get_student_enrolled_courses(current_user.user_id, page=page, limit=limit)
 
 
 @router.get(

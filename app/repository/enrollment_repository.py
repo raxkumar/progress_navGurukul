@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from datetime import datetime
 from bson import ObjectId
 from models.enrollment import EnrollmentCreate, EnrollmentStatus, EnrollmentInDB
@@ -44,10 +44,20 @@ class EnrollmentRepository:
             approved_by=created_enrollment.get("approved_by")
         )
     
-    async def get_enrollments_by_student(self, student_id: str) -> List[EnrollmentInDB]:
-        """Get all enrollments for a student"""
+    async def get_enrollments_by_student(self, student_id: str, skip: int = 0, limit: int = 10) -> Tuple[List[EnrollmentInDB], int]:
+        """Get enrollments for a student with pagination
+        
+        Returns:
+            Tuple of (enrollments list, total count)
+        """
+        query = {"student_id": student_id}
+        
+        # Get total count
+        total = await self.collection.count_documents(query)
+        
+        # Get paginated enrollments
         enrollments = []
-        cursor = self.collection.find({"student_id": student_id}).sort("requested_at", -1)
+        cursor = self.collection.find(query).sort("requested_at", -1).skip(skip).limit(limit)
         
         async for enrollment in cursor:
             enrollments.append(EnrollmentInDB(
@@ -60,7 +70,7 @@ class EnrollmentRepository:
                 approved_by=enrollment.get("approved_by")
             ))
         
-        return enrollments
+        return enrollments, total
     
     async def get_enrollments_by_course(self, course_id: str) -> List[EnrollmentInDB]:
         """Get all enrollments for a course"""
