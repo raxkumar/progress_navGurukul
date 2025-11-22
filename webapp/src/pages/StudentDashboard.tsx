@@ -15,8 +15,10 @@ import {
   CardActions,
   Pagination,
   Stack,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
-import { School, Assignment, TrendingUp, Add, CheckCircle, HourglassEmpty, Cancel, BarChart } from '@mui/icons-material';
+import { School, Assignment, TrendingUp, Add, CheckCircle, HourglassEmpty, Cancel, BarChart, FilterList } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -38,30 +40,56 @@ const StudentDashboard: React.FC = () => {
   const [totalCourses, setTotalCourses] = useState(0);
   const limit = 6; // Show 6 courses per page
   const [studentStats, setStudentStats] = useState<StudentStats | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   useEffect(() => {
     fetchData();
-  }, [page]);
+  }, [page, statusFilter]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Fetch enrolled courses and stats in parallel
-      const [coursesResponse, stats] = await Promise.all([
-        enrollmentService.getMyEnrolledCourses(page, limit),
-        studentStatsService.getMyStats(),
-      ]);
-      
-      const courses = coursesResponse.items;
-      setTotalPages(coursesResponse.total_pages);
-      setTotalCourses(coursesResponse.total);
+      // Fetch student stats
+      const stats = await studentStatsService.getMyStats();
       setStudentStats(stats);
       
-      // Fetch progress for each course
+      // Fetch all enrolled courses (paginate through backend)
+      let allCourses: CourseWithProgress[] = [];
+      let currentPage = 1;
+      let totalPagesBackend = 1;
+
+      // Fetch first page to get total pages
+      const firstResponse = await enrollmentService.getMyEnrolledCourses(currentPage, 100);
+      allCourses = [...firstResponse.items];
+      totalPagesBackend = firstResponse.total_pages;
+
+      // Fetch remaining pages if any
+      while (currentPage < totalPagesBackend) {
+        currentPage++;
+        const response = await enrollmentService.getMyEnrolledCourses(currentPage, 100);
+        allCourses = [...allCourses, ...response.items];
+      }
+      
+      // Filter courses based on status
+      const filteredCourses = statusFilter === 'ALL'
+        ? allCourses
+        : allCourses.filter(course => course.enrollment?.status === statusFilter);
+      
+      // Calculate pagination for filtered results
+      const totalFiltered = filteredCourses.length;
+      const totalPagesFiltered = Math.ceil(totalFiltered / limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
+      
+      setTotalPages(totalPagesFiltered);
+      setTotalCourses(totalFiltered);
+      
+      // Fetch progress for each course on current page
       const coursesWithProgress = await Promise.all(
-        courses.map(async (course) => {
+        paginatedCourses.map(async (course) => {
           try {
             const progress = await progressService.getCourseProgress(course._id);
             return { ...course, progress };
@@ -83,6 +111,13 @@ const StudentDashboard: React.FC = () => {
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleFilterChange = (event: React.MouseEvent<HTMLElement>, newFilter: string | null) => {
+    if (newFilter !== null) {
+      setStatusFilter(newFilter);
+      setPage(1); // Reset to first page when filter changes
+    }
   };
 
   const getEnrollmentStatusIcon = (status: EnrollmentStatus) => {
@@ -220,6 +255,30 @@ const StudentDashboard: React.FC = () => {
               <Typography variant="h5" fontWeight={600}>
                 My Enrolled Courses
               </Typography>
+            </Box>
+
+            {/* Status Filter */}
+            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+              <FilterList sx={{ color: 'text.secondary' }} />
+              <ToggleButtonGroup
+                value={statusFilter}
+                exclusive
+                onChange={handleFilterChange}
+                aria-label="enrollment status filter"
+                size="small"
+              >
+                <ToggleButton value="ALL" aria-label="all courses">
+                  All
+                </ToggleButton>
+                <ToggleButton value="APPROVED" aria-label="approved courses">
+                  <CheckCircle sx={{ fontSize: 18, mr: 0.5 }} />
+                  Approved
+                </ToggleButton>
+                <ToggleButton value="PENDING" aria-label="pending courses">
+                  <HourglassEmpty sx={{ fontSize: 18, mr: 0.5 }} />
+                  Pending
+                </ToggleButton>
+              </ToggleButtonGroup>
             </Box>
 
             {loading ? (
