@@ -15,7 +15,7 @@ A full-stack web application for tracking student progress across courses with r
 
 ### Backend (FastAPI)
 - **Framework**: FastAPI 0.110.0
-- **Database**: MongoDB with Motor async driver
+- **Database**: MongoDB with Motor async driver (auto-initialized on startup)
 - **Authentication**: JWT tokens with bcrypt password hashing
 - **API Documentation**: Auto-generated at `/docs`
 
@@ -52,11 +52,10 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables (create .env file in root)
-cp .env.example .env
-# Edit .env and set your JWT_SECRET_KEY and other configurations
+# Create .env file in root directory with required variables
+# (see environment variables section below)
 
-# Run database migrations and start server
+# Start the server (collections auto-created on first run)
 cd app
 python main.py
 ```
@@ -89,9 +88,6 @@ Frontend will run on: `http://localhost:5173`
 MONGO_HOST=localhost
 MONGO_PORT=27017
 MONGO_DB=progress_db
-
-# Migrations
-MIGRATIONS_DIR=app/migrations
 
 # Server Configuration
 SERVER_PORT=5001
@@ -132,8 +128,6 @@ progress/
 │   │   └── user_repository.py   # Database operations
 │   ├── services/
 │   │   └── auth_service.py      # Business logic
-│   ├── migrations/
-│   │   └── 20241122000000_create_users.py
 │   └── main.py                  # FastAPI app entry
 │
 ├── webapp/                       # Frontend (React + TypeScript)

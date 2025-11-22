@@ -3,9 +3,6 @@ import motor.motor_asyncio
 from core.log_config import logger
 from typing_extensions import Annotated
 from pydantic.functional_validators import BeforeValidator
-from mongo_migrate.migration_manager import MigrationManager
-from mongo_migrate.exceptions import MongoMigrateException
-from types import SimpleNamespace
 
 # Initialize global variables
 client = None
@@ -18,33 +15,31 @@ def get_database():
     """Return the connected database."""
     return database
 
-async def run_migrations():
-    """Run database migrations using mongo-migrate."""
+
+async def initialize_collections():
+    """Initialize required collections and indexes on application startup."""
     try:
-        # Set up the migration configuration
-        MONGO_HOST = os.getenv("MONGO_HOST")
-        MONGO_PORT = int(os.getenv("MONGO_PORT"))
-        MONGO_DB = os.getenv("MONGO_DB")
-        MIGRATIONS_DIR = os.getenv("MIGRATIONS_DIR")
-
-        # Create the configuration object using SimpleNamespace
-        config = SimpleNamespace(
-            host=MONGO_HOST,
-            port=MONGO_PORT,
-            database=MONGO_DB
-        )
-
-        # Initialize MigrationManager with config and migrations path
-        logger.info("Running database migrations...")
-        migration_manager = MigrationManager(config=config, migrations_path=MIGRATIONS_DIR)
+        logger.info("Initializing database collections and indexes...")
         
-        # Run all pending migrations
-        migration_manager.migrate('upgrade')
-        logger.info("Migrations applied successfully.")
-
-    except MongoMigrateException as e:
-        logger.error(f"Migration failed: {e}")
+        # Create users collection with unique email index
+        users_collection = database['users']
+        
+        # Get existing indexes
+        existing_indexes = await users_collection.index_information()
+        
+        # Create unique index on email if it doesn't exist
+        if 'email_1' not in existing_indexes:
+            await users_collection.create_index('email', unique=True)
+            logger.info("Created unique index on 'email' field in users collection")
+        else:
+            logger.info("Email index already exists in users collection")
+        
+        logger.info("Database initialization completed successfully!")
+        
+    except Exception as e:
+        logger.error(f"Error initializing collections: {e}")
         raise
+
 
 async def connect_mongodb():
     """Attempt to connect to MongoDB and set the global client and database."""
@@ -65,6 +60,10 @@ async def connect_mongodb():
         # Verify the connection by listing collections or similar operation
         await client.server_info()
         logger.info("Database connected successfully!")
+        
+        # Initialize collections and indexes
+        await initialize_collections()
+        
     except Exception as e:
         logger.error(f"Error connecting to database: {e}")
         raise

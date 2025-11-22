@@ -1,7 +1,6 @@
 from typing import Optional
 from datetime import datetime
 from bson import ObjectId
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from models.user import UserCreate, UserInDB, UserRole
 from core.mongodb import get_database
 from core.log_config import logger
@@ -11,13 +10,13 @@ class UserRepository:
     """Repository for user database operations"""
     
     def __init__(self):
-        self.db: AsyncIOMotorDatabase = get_database()
         self.collection_name = "users"
     
     @property
     def collection(self):
-        """Get users collection"""
-        return self.db[self.collection_name]
+        """Get users collection - lazily fetches database"""
+        db = get_database()
+        return db[self.collection_name]
     
     async def create_user(self, user: UserCreate, hashed_password: str) -> UserInDB:
         """
