@@ -1,0 +1,85 @@
+from fastapi import APIRouter, Depends, status
+from typing import List
+from models.enrollment import EnrollmentCreate, Enrollment
+from models.user import TokenData
+from services.enrollment_service import enrollment_service
+from core.dependencies import get_current_student, get_current_mentor
+from core.security import get_current_user
+
+router = APIRouter()
+
+
+@router.post(
+    "/",
+    response_model=Enrollment,
+    status_code=status.HTTP_201_CREATED,
+    summary="Request enrollment in a course"
+)
+async def request_enrollment(
+    enrollment_data: EnrollmentCreate,
+    current_user: TokenData = Depends(get_current_student)
+):
+    """
+    Request enrollment in a course (Student only).
+    
+    - **course_id**: ID of the course to enroll in
+    """
+    return await enrollment_service.request_enrollment(enrollment_data, current_user.user_id)
+
+
+@router.get(
+    "/my-enrollments",
+    response_model=List[Enrollment],
+    summary="Get student's enrollments"
+)
+async def get_my_enrollments(current_user: TokenData = Depends(get_current_student)):
+    """
+    Get all enrollments for the current student (Student only).
+    """
+    return await enrollment_service.get_student_enrollments(current_user.user_id)
+
+
+@router.get(
+    "/courses/{course_id}",
+    response_model=List[Enrollment],
+    summary="Get course enrollments"
+)
+async def get_course_enrollments(
+    course_id: str,
+    current_user: TokenData = Depends(get_current_mentor)
+):
+    """
+    Get all enrollments for a course (Course owner only).
+    """
+    return await enrollment_service.get_course_enrollments(course_id, current_user.user_id)
+
+
+@router.put(
+    "/{enrollment_id}/approve",
+    response_model=Enrollment,
+    summary="Approve enrollment request"
+)
+async def approve_enrollment(
+    enrollment_id: str,
+    current_user: TokenData = Depends(get_current_mentor)
+):
+    """
+    Approve an enrollment request (Course owner only).
+    """
+    return await enrollment_service.approve_enrollment(enrollment_id, current_user.user_id)
+
+
+@router.put(
+    "/{enrollment_id}/reject",
+    response_model=Enrollment,
+    summary="Reject enrollment request"
+)
+async def reject_enrollment(
+    enrollment_id: str,
+    current_user: TokenData = Depends(get_current_mentor)
+):
+    """
+    Reject an enrollment request (Course owner only).
+    """
+    return await enrollment_service.reject_enrollment(enrollment_id, current_user.user_id)
+

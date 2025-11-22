@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import StudentDashboard from './pages/StudentDashboard';
 import MentorDashboard from './pages/MentorDashboard';
+import CreateCourse from './pages/mentor/CreateCourse';
+import CourseDetail from './pages/mentor/CourseDetail';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { UserRole } from './types/auth';
 import { ROUTES } from './config/constants';
@@ -42,6 +44,22 @@ function App() {
         element={
           <ProtectedRoute requiredRole={UserRole.MENTOR}>
             <MentorDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mentor/courses/new"
+        element={
+          <ProtectedRoute requiredRole={UserRole.MENTOR}>
+            <CreateCourse />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mentor/courses/:courseId"
+        element={
+          <ProtectedRoute requiredRole={UserRole.MENTOR}>
+            <CourseDetail />
           </ProtectedRoute>
         }
       />

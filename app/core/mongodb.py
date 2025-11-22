@@ -21,18 +21,58 @@ async def initialize_collections():
     try:
         logger.info("Initializing database collections and indexes...")
         
-        # Create users collection with unique email index
+        # Users collection - unique email index
         users_collection = database['users']
-        
-        # Get existing indexes
-        existing_indexes = await users_collection.index_information()
-        
-        # Create unique index on email if it doesn't exist
-        if 'email_1' not in existing_indexes:
+        users_indexes = await users_collection.index_information()
+        if 'email_1' not in users_indexes:
             await users_collection.create_index('email', unique=True)
             logger.info("Created unique index on 'email' field in users collection")
-        else:
-            logger.info("Email index already exists in users collection")
+        
+        # Courses collection - mentor_id index
+        courses_collection = database['courses']
+        courses_indexes = await courses_collection.index_information()
+        if 'mentor_id_1' not in courses_indexes:
+            await courses_collection.create_index('mentor_id')
+            logger.info("Created index on 'mentor_id' field in courses collection")
+        
+        # Lessons collection - course_id and order index
+        lessons_collection = database['lessons']
+        lessons_indexes = await lessons_collection.index_information()
+        if 'course_id_1' not in lessons_indexes:
+            await lessons_collection.create_index('course_id')
+            logger.info("Created index on 'course_id' field in lessons collection")
+        if 'course_id_1_order_1' not in lessons_indexes:
+            await lessons_collection.create_index([('course_id', 1), ('order', 1)])
+            logger.info("Created compound index on 'course_id' and 'order' in lessons collection")
+        
+        # Enrollments collection - student_id, course_id indexes
+        enrollments_collection = database['enrollments']
+        enrollments_indexes = await enrollments_collection.index_information()
+        if 'student_id_1' not in enrollments_indexes:
+            await enrollments_collection.create_index('student_id')
+            logger.info("Created index on 'student_id' field in enrollments collection")
+        if 'course_id_1' not in enrollments_indexes:
+            await enrollments_collection.create_index('course_id')
+            logger.info("Created index on 'course_id' field in enrollments collection")
+        if 'student_id_1_course_id_1' not in enrollments_indexes:
+            await enrollments_collection.create_index([('student_id', 1), ('course_id', 1)], unique=True)
+            logger.info("Created unique compound index on 'student_id' and 'course_id' in enrollments collection")
+        
+        # Progress collection - student_id, lesson_id, course_id indexes
+        progress_collection = database['progress']
+        progress_indexes = await progress_collection.index_information()
+        if 'student_id_1' not in progress_indexes:
+            await progress_collection.create_index('student_id')
+            logger.info("Created index on 'student_id' field in progress collection")
+        if 'lesson_id_1' not in progress_indexes:
+            await progress_collection.create_index('lesson_id')
+            logger.info("Created index on 'lesson_id' field in progress collection")
+        if 'course_id_1' not in progress_indexes:
+            await progress_collection.create_index('course_id')
+            logger.info("Created index on 'course_id' field in progress collection")
+        if 'student_id_1_lesson_id_1' not in progress_indexes:
+            await progress_collection.create_index([('student_id', 1), ('lesson_id', 1)], unique=True)
+            logger.info("Created unique compound index on 'student_id' and 'lesson_id' in progress collection")
         
         logger.info("Database initialization completed successfully!")
         
