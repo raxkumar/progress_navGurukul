@@ -30,7 +30,12 @@ async def lifespan(app: FastAPI):
     logger.info("Stopping FastAPI application.")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Progress - Student Dashboard API",
+    description="API for tracking student progress across courses with role-based authentication",
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 
 origins = [

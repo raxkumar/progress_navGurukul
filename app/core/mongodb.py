@@ -38,8 +38,8 @@ async def run_migrations():
         logger.info("Running database migrations...")
         migration_manager = MigrationManager(config=config, migrations_path=MIGRATIONS_DIR)
         
-        # If any new migration files are added, Below given target_migration has to updated before running the app.
-        migration_manager.migrate('upgrade', target_migration='20241103094310')
+        # Run all pending migrations
+        migration_manager.migrate('upgrade')
         logger.info("Migrations applied successfully.")
 
     except MongoMigrateException as e:
