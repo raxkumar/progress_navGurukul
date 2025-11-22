@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
+from models.progress import CourseProgress
+from models.enrollment import Enrollment
 
 
 class CourseCreate(BaseModel):
@@ -39,4 +41,10 @@ class CourseInDB(BaseModel):
     
     class Config:
         populate_by_name = True
+
+
+class CourseWithProgress(Course):
+    """Course with progress and enrollment information"""
+    progress: Optional[CourseProgress] = None
+    enrollment: Optional[Enrollment] = None
 

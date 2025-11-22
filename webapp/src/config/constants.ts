@@ -16,6 +16,10 @@ export const ROUTES = {
   LOGIN: '/login',
   SIGNUP: '/signup',
   STUDENT_DASHBOARD: '/student/dashboard',
+  STUDENT_COURSES: '/student/courses',
+  STUDENT_COURSE_DETAIL: '/student/courses/:courseId',
   MENTOR_DASHBOARD: '/mentor/dashboard',
+  CREATE_COURSE: '/mentor/courses/new',
+  COURSE_DETAIL: '/mentor/courses/:courseId',
 } as const;
 

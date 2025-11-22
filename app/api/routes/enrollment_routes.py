@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from typing import List
 from models.enrollment import EnrollmentCreate, Enrollment
+from models.course import CourseWithProgress
 from models.user import TokenData
 from services.enrollment_service import enrollment_service
 from core.dependencies import get_current_student, get_current_mentor
@@ -37,6 +38,30 @@ async def get_my_enrollments(current_user: TokenData = Depends(get_current_stude
     Get all enrollments for the current student (Student only).
     """
     return await enrollment_service.get_student_enrollments(current_user.user_id)
+
+
+@router.get(
+    "/my-courses",
+    response_model=List[CourseWithProgress],
+    summary="Get student's enrolled courses with progress"
+)
+async def get_my_enrolled_courses(current_user: TokenData = Depends(get_current_student)):
+    """
+    Get all enrolled courses with progress for the current student (Student only).
+    """
+    return await enrollment_service.get_student_enrolled_courses(current_user.user_id)
+
+
+@router.get(
+    "/pending",
+    response_model=List[Enrollment],
+    summary="Get pending enrollment requests"
+)
+async def get_pending_enrollments(current_user: TokenData = Depends(get_current_mentor)):
+    """
+    Get all pending enrollment requests for courses owned by the mentor (Mentor only).
+    """
+    return await enrollment_service.get_mentor_pending_enrollments(current_user.user_id)
 
 
 @router.get(

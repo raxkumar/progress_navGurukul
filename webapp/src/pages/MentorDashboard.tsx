@@ -8,33 +8,87 @@ import {
   CardContent,
   Button,
   CircularProgress,
+  Alert,
+  Chip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  Snackbar,
 } from '@mui/material';
-import { Add, School, People, CheckCircle } from '@mui/icons-material';
+import { Add, School, People, CheckCircle, HourglassEmpty, Check, Close } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import courseService from '../services/courseService';
-import type { Course } from '../types/course';
+import enrollmentService from '../services/enrollmentService';
+import type { Course, Enrollment } from '../types/course';
 
 const MentorDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [enrollmentRequests, setEnrollmentRequests] = useState<Enrollment[]>([]);
+  const [showEnrollmentsDialog, setShowEnrollmentsDialog] = useState(false);
+  const [processing, setProcessing] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCourses();
+    loadData();
   }, []);
 
-  const loadCourses = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await courseService.getMyCourses();
-      setCourses(data);
+      const [coursesData, enrollmentsData] = await Promise.all([
+        courseService.getMyCourses(),
+        enrollmentService.getPendingEnrollments(),
+      ]);
+      setCourses(coursesData);
+      setEnrollmentRequests(enrollmentsData);
     } catch (error) {
-      console.error('Failed to load courses:', error);
+      console.error('Failed to load data:', error);
+      setError('Failed to load data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveEnrollment = async (enrollmentId: string) => {
+    try {
+      setProcessing(enrollmentId);
+      setError(null);
+      await enrollmentService.approveEnrollment(enrollmentId);
+      setSuccessMessage('Enrollment approved successfully!');
+      // Refresh data
+      await loadData();
+    } catch (err: any) {
+      console.error('Error approving enrollment:', err);
+      setError(err.response?.data?.detail || 'Failed to approve enrollment');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleRejectEnrollment = async (enrollmentId: string) => {
+    try {
+      setProcessing(enrollmentId);
+      setError(null);
+      await enrollmentService.rejectEnrollment(enrollmentId);
+      setSuccessMessage('Enrollment rejected');
+      // Refresh data
+      await loadData();
+    } catch (err: any) {
+      console.error('Error rejecting enrollment:', err);
+      setError(err.response?.data?.detail || 'Failed to reject enrollment');
+    } finally {
+      setProcessing(null);
     }
   };
 
@@ -44,6 +98,11 @@ const MentorDashboard: React.FC = () => {
 
   const handleViewCourse = (courseId: string) => {
     navigate(`/mentor/courses/${courseId}`);
+  };
+
+  const getCourseTitle = (courseId: string) => {
+    const course = courses.find((c) => c._id === courseId);
+    return course?.title || 'Unknown Course';
   };
 
   return (
@@ -68,6 +127,12 @@ const MentorDashboard: React.FC = () => {
           </Button>
         </Box>
 
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
         <Grid container spacing={3}>
           {/* Stats Cards */}
           <Grid item xs={12} md={4}>
@@ -80,7 +145,7 @@ const MentorDashboard: React.FC = () => {
                       Courses
                     </Typography>
                     <Typography variant="h4" fontWeight={700}>
-                      {courses.length}
+                      {loading ? '...' : courses.length}
                     </Typography>
                   </Box>
                 </Box>
@@ -113,18 +178,28 @@ const MentorDashboard: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%' }}>
+            <Card
+              sx={{
+                height: '100%',
+                cursor: enrollmentRequests.length > 0 ? 'pointer' : 'default',
+                '&:hover': enrollmentRequests.length > 0 ? { boxShadow: 4 } : {},
+              }}
+              onClick={() => enrollmentRequests.length > 0 && setShowEnrollmentsDialog(true)}
+            >
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <CheckCircle sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
-                  <Box>
+                  <HourglassEmpty sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
+                  <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" fontWeight={600}>
                       Pending
                     </Typography>
                     <Typography variant="h4" fontWeight={700}>
-                      0
+                      {loading ? '...' : enrollmentRequests.length}
                     </Typography>
                   </Box>
+                  {enrollmentRequests.length > 0 && (
+                    <Chip label="Review" color="warning" size="small" />
+                  )}
                 </Box>
                 <Typography variant="body2" color="text.secondary">
                   Pending enrollment requests
@@ -192,6 +267,102 @@ const MentorDashboard: React.FC = () => {
             )}
           </Grid>
         </Grid>
+
+        {/* Enrollment Requests Dialog */}
+        <Dialog
+          open={showEnrollmentsDialog}
+          onClose={() => setShowEnrollmentsDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" fontWeight={600}>
+                Pending Enrollment Requests
+              </Typography>
+              <IconButton onClick={() => setShowEnrollmentsDialog(false)}>
+                <Close />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            {enrollmentRequests.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+                <Typography variant="h6" gutterBottom>
+                  No Pending Requests
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  All enrollment requests have been processed
+                </Typography>
+              </Box>
+            ) : (
+              <List>
+                {enrollmentRequests.map((enrollment) => (
+                  <ListItem
+                    key={enrollment._id}
+                    sx={{
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      mb: 1,
+                    }}
+                    secondaryAction={
+                      <Box>
+                        <IconButton
+                          color="success"
+                          onClick={() => handleApproveEnrollment(enrollment._id)}
+                          disabled={processing === enrollment._id}
+                        >
+                          {processing === enrollment._id ? (
+                            <CircularProgress size={24} />
+                          ) : (
+                            <Check />
+                          )}
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleRejectEnrollment(enrollment._id)}
+                          disabled={processing === enrollment._id}
+                        >
+                          <Close />
+                        </IconButton>
+                      </Box>
+                    }
+                  >
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography fontWeight={600}>
+                            {getCourseTitle(enrollment.course_id)}
+                          </Typography>
+                          <Chip label="Pending" color="warning" size="small" />
+                        </Box>
+                      }
+                      secondary={
+                        <Typography variant="body2" color="text.secondary">
+                          Student ID: {enrollment.student_id}
+                          <br />
+                          Requested: {new Date(enrollment.requested_at).toLocaleString()}
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowEnrollmentsDialog(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={!!successMessage}
+          autoHideDuration={4000}
+          onClose={() => setSuccessMessage(null)}
+          message={successMessage}
+        />
       </Container>
     </Layout>
   );

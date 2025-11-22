@@ -19,6 +19,13 @@ class ProgressService {
     return response.data;
   }
 
+  async getMyProgress(courseId: string): Promise<Progress[]> {
+    const response = await apiClient.get<Progress[]>(
+      `/progress/my-progress/${courseId}`
+    );
+    return response.data;
+  }
+
   async getCourseProgressDetails(courseId: string): Promise<Progress[]> {
     const response = await apiClient.get<Progress[]>(
       `/progress/courses/${courseId}/details`

@@ -39,6 +39,21 @@ async def get_course_progress(
 
 
 @router.get(
+    "/my-progress/{course_id}",
+    response_model=List[Progress],
+    summary="Get my progress for a course"
+)
+async def get_my_progress(
+    course_id: str,
+    current_user: TokenData = Depends(get_current_student)
+):
+    """
+    Get student's own progress for a course (Student only).
+    """
+    return await progress_service.get_student_progress_details(course_id, current_user.user_id)
+
+
+@router.get(
     "/courses/{course_id}/details",
     response_model=List[Progress],
     summary="Get detailed course progress"

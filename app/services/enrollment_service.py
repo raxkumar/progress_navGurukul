@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import HTTPException, status
 from models.enrollment import EnrollmentCreate, EnrollmentStatus, Enrollment
+from models.course import CourseWithProgress, Course
 from repository.enrollment_repository import enrollment_repository
 from repository.course_repository import course_repository
 from core.log_config import logger
@@ -195,6 +196,87 @@ class EnrollmentService:
         """Check if student is enrolled (approved) in a course"""
         enrollment = await enrollment_repository.check_enrollment_exists(student_id, course_id)
         return enrollment is not None and enrollment.status == EnrollmentStatus.APPROVED
+    
+    async def get_student_enrolled_courses(self, student_id: str) -> List[CourseWithProgress]:
+        """Get all enrolled courses with progress for a student"""
+        # Get all enrollments for the student
+        enrollments_in_db = await enrollment_repository.get_enrollments_by_student(student_id)
+        
+        courses_with_progress = []
+        
+        for enrollment in enrollments_in_db:
+            # Get course details
+            course_in_db = await course_repository.get_course_by_id(enrollment.course_id)
+            
+            if not course_in_db:
+                continue
+            
+            # Convert to Course model
+            course = Course(
+                _id=course_in_db.id,
+                title=course_in_db.title,
+                description=course_in_db.description,
+                mentor_id=course_in_db.mentor_id,
+                created_at=course_in_db.created_at,
+                updated_at=course_in_db.updated_at
+            )
+            
+            # Convert enrollment to Enrollment model
+            enrollment_model = Enrollment(
+                _id=enrollment.id,
+                student_id=enrollment.student_id,
+                course_id=enrollment.course_id,
+                status=enrollment.status,
+                requested_at=enrollment.requested_at,
+                approved_at=enrollment.approved_at,
+                approved_by=enrollment.approved_by
+            )
+            
+            # Create CourseWithProgress
+            course_with_progress = CourseWithProgress(
+                _id=course.id,
+                title=course.title,
+                description=course.description,
+                mentor_id=course.mentor_id,
+                created_at=course.created_at,
+                updated_at=course.updated_at,
+                enrollment=enrollment_model,
+                progress=None  # Progress will be fetched separately by the frontend if needed
+            )
+            
+            courses_with_progress.append(course_with_progress)
+        
+        return courses_with_progress
+    
+    async def get_mentor_pending_enrollments(self, mentor_id: str) -> List[Enrollment]:
+        """Get all pending enrollment requests for courses owned by the mentor"""
+        # Get all courses by mentor
+        courses = await course_repository.get_courses_by_mentor(mentor_id)
+        
+        all_pending_enrollments = []
+        
+        for course in courses:
+            # Get pending enrollments for each course
+            enrollments_in_db = await enrollment_repository.get_enrollments_by_course(course.id)
+            
+            # Filter pending enrollments
+            pending_enrollments = [
+                Enrollment(
+                    _id=e.id,
+                    student_id=e.student_id,
+                    course_id=e.course_id,
+                    status=e.status,
+                    requested_at=e.requested_at,
+                    approved_at=e.approved_at,
+                    approved_by=e.approved_by
+                )
+                for e in enrollments_in_db
+                if e.status == EnrollmentStatus.PENDING
+            ]
+            
+            all_pending_enrollments.extend(pending_enrollments)
+        
+        return all_pending_enrollments
 
 
 # Create singleton instance

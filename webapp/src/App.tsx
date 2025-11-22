@@ -7,6 +7,8 @@ import StudentDashboard from './pages/StudentDashboard';
 import MentorDashboard from './pages/MentorDashboard';
 import CreateCourse from './pages/mentor/CreateCourse';
 import CourseDetail from './pages/mentor/CourseDetail';
+import AvailableCourses from './pages/student/AvailableCourses';
+import StudentCourseDetail from './pages/student/StudentCourseDetail';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { UserRole } from './types/auth';
 import { ROUTES } from './config/constants';
@@ -40,6 +42,22 @@ function App() {
         }
       />
       <Route
+        path={ROUTES.STUDENT_COURSES}
+        element={
+          <ProtectedRoute requiredRole={UserRole.STUDENT}>
+            <AvailableCourses />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.STUDENT_COURSE_DETAIL}
+        element={
+          <ProtectedRoute requiredRole={UserRole.STUDENT}>
+            <StudentCourseDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.MENTOR_DASHBOARD}
         element={
           <ProtectedRoute requiredRole={UserRole.MENTOR}>
@@ -48,7 +66,7 @@ function App() {
         }
       />
       <Route
-        path="/mentor/courses/new"
+        path={ROUTES.CREATE_COURSE}
         element={
           <ProtectedRoute requiredRole={UserRole.MENTOR}>
             <CreateCourse />
@@ -56,7 +74,7 @@ function App() {
         }
       />
       <Route
-        path="/mentor/courses/:courseId"
+        path={ROUTES.COURSE_DETAIL}
         element={
           <ProtectedRoute requiredRole={UserRole.MENTOR}>
             <CourseDetail />
