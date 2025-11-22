@@ -45,9 +45,7 @@ pip install -r requirements.txt
 
 4. Enter the `app/` directory, Run the FastAPI application:
 
-```
-gunicorn -c gunicorn_dev_config.py main:app
-```
+
 
 Open [http://localhost:5001/management/health/readiness](http://localhost:5001/management/health/readiness) to view it in your browser.
 
